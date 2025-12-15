@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Crypto Predictions</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background: var(--tg-theme-bg-color, #ffffff);
+            color: var(--tg-theme-text-color, #000000);
+            padding: 20px;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 500px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 24px;
+            color: var(--tg-theme-text-color, #000000);
+        }
+
+        .section {
+            background: var(--tg-theme-secondary-bg-color, #f0f0f0);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .section-title {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 15px;
+            color: var(--tg-theme-text-color, #000000);
+        }
+
+        .options {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+        }
+
+        .option-btn {
+            padding: 15px;
+            border: 2px solid var(--tg-theme-button-color, #3390ec);
+            background: transparent;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.3s;
+            color: var(--tg-theme-text-color, #000000);
+        }
+
+        .option-btn:hover {
+            transform: translateY(-2px);
+        }
+
+        .option-btn.selected {
+            background: var(--tg-theme-button-color, #3390ec);
+            color: var(--tg-theme-button-text-color, #ffffff);
+        }
+
+        .predict-btn {
+            width: 100%;
+            padding: 18px;
+            background: var(--tg-theme-button-color, #3390ec);
+            color: var(--tg-theme-button-text-color, #ffffff);
+            border: none;
+            border-radius: 12px;
+            font-size: 18px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-top: 20px;
+        }
+
+        .predict-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .predict-btn:not(:disabled):hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(51, 144, 236, 0.3);
+        }
+
+        .result {
+            display: none;
+            text-align: center;
+            padding: 30px;
+            background: var(--tg-theme-secondary-bg-color, #f0f0f0);
+            border-radius: 12px;
+            margin-top: 20px;
+        }
+
+        .result.show {
+            display: block;
+            animation: fadeIn 0.5s;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .result-icon {
+            font-size: 64px;
+            margin-bottom: 15px;
+        }
+
+        .result-text {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+
+        .result-details {
+            font-size: 14px;
+            color: var(--tg-theme-hint-color, #999999);
+            margin-bottom: 20px;
+        }
+
+        .play-again-btn {
+            width: 100%;
+            padding: 15px;
+            background: transparent;
+            color: var(--tg-theme-button-color, #3390ec);
+            border: 2px solid var(--tg-theme-button-color, #3390ec);
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .play-again-btn:hover {
+            background: var(--tg-theme-button-color, #3390ec);
+            color: var(--tg-theme-button-text-color, #ffffff);
+        }
+
+        .loading {
+            text-align: center;
+            padding: 20px;
+            font-size: 16px;
+            color: var(--tg-theme-hint-color, #999999);
+        }
+
+        .spinner {
+            border: 3px solid var(--tg-theme-secondary-bg-color, #f0f0f0);
+            border-top: 3px solid var(--tg-theme-button-color, #3390ec);
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎮 Crypto Predictions</h1>
+        
+        <div id="gameScreen">
+            <div class="section">
+                <div class="section-title">📊 Выберите криптовалютную пару</div>
+                <div class="options" id="pairOptions">
+                    <button class="option-btn" data-pair="BTC/USDT">BTC/USDT</button>
+                    <button class="option-btn" data-pair="ETH/USDT">ETH/USDT</button>
+                    <button class="option-btn" data-pair="BNB/USDT">BNB/USDT</button>
+                    <button class="option-btn" data-pair="SOL/USDT">SOL/USDT</button>
+                    <button class="option-btn" data-pair="XRP/USDT">XRP/USDT</button>
+                    <button class="option-btn" data-pair="ADA/USDT">ADA/USDT</button>
+                </div>
+            </div>
+
+            <div class="section">
+                <div class="section-title">⏰ Выберите временной интервал</div>
+                <div class="options" id="timeOptions">
+                    <button class="option-btn" data-time="10s">10 секунд</button>
+                    <button class="option-btn" data-time="30s">30 секунд</button>
+                    <button class="option-btn" data-time="1m">1 минута</button>
+                    <button class="option-btn" data-time="3m">3 минуты</button>
+                    <button class="option-btn" data-time="5m">5 минут</button>
+                </div>
+            </div>
+
+            <button class="predict-btn" id="predictBtn" disabled>
+                🔮 Получить прогноз от бота
+            </button>
+        </div>
+
+        <div class="result" id="resultScreen">
+            <div class="result-icon" id="resultIcon"></div>
+            <div class="result-text" id="resultText"></div>
+            <div class="result-details" id="resultDetails"></div>
+            <button class="play-again-btn" id="playAgainBtn">🔄 Играть снова</button>
+        </div>
+    </div>
+
+    <script>
+        // Инициализация Telegram Web App
+        let tg = window.Telegram.WebApp;
+        tg.expand();
+        tg.MainButton.hide();
+
+        // Переменные для хранения выбора
+        let selectedPair = null;
+        let selectedTime = null;
+
+        // Обработчики для выбора пары
+        document.querySelectorAll('#pairOptions .option-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                document.querySelectorAll('#pairOptions .option-btn').forEach(b => 
+                    b.classList.remove('selected'));
+                this.classList.add('selected');
+                selectedPair = this.dataset.pair;
+                checkSelection();
+            });
+        });
+
+        // Обработчики для выбора времени
+        document.querySelectorAll('#timeOptions .option-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                document.querySelectorAll('#timeOptions .option-btn').forEach(b => 
+                    b.classList.remove('selected'));
+                this.classList.add('selected');
+                selectedTime = this.dataset.time;
+                checkSelection();
+            });
+        });
+
+        // Проверка выбора и активация кнопки
+        function checkSelection() {
+            const predictBtn = document.getElementById('predictBtn');
+            if (selectedPair && selectedTime) {
+                predictBtn.disabled = false;
+            }
+        }
+
+        // Обработчик кнопки прогноза
+        document.getElementById('predictBtn').addEventListener('click', function() {
+            makePrediction();
+        });
+
+        // Функция создания прогноза
+        function makePrediction() {
+            const gameScreen = document.getElementById('gameScreen');
+            const resultScreen = document.getElementById('resultScreen');
+            
+            // Скрываем экран игры
+            gameScreen.style.display = 'none';
+            
+            // Показываем загрузку
+            resultScreen.innerHTML = `
+                <div class="loading">
+                    <div class="spinner"></div>
+                    <p>Бот анализирует рынок...</p>
+                </div>
+            `;
+            resultScreen.classList.add('show');
+
+            // Имитация анализа (2 секунды)
+            setTimeout(() => {
+                showResult();
+            }, 2000);
+        }
+
+        // Показать результат
+        function showResult() {
+            const resultScreen = document.getElementById('resultScreen');
+            
+            // Случайный выбор направления
+            const prediction = Math.random() > 0.5 ? 'up' : 'down';
+            const icon = prediction === 'up' ? '📈' : '📉';
+            const direction = prediction === 'up' ? 'ВВЕРХ ⬆️' : 'ВНИЗ ⬇️';
+            const color = prediction === 'up' ? '#10b981' : '#ef4444';
+
+            const timeNames = {
+                '10s': '10 секунд',
+                '30s': '30 секунд',
+                '1m': '1 минуту',
+                '3m': '3 минуты',
+                '5m': '5 минут'
+            };
+
+            resultScreen.innerHTML = `
+                <div class="result-icon">${icon}</div>
+                <div class="result-text" style="color: ${color}">
+                    Прогноз: цена пойдет ${direction}
+                </div>
+                <div class="result-details">
+                    Пара: <strong>${selectedPair}</strong><br>
+                    Интервал: <strong>${timeNames[selectedTime]}</strong>
+                </div>
+                <button class="play-again-btn" id="playAgainBtn">🔄 Играть снова</button>
+            `;
+
+            // Вибрация при показе результата
+            if (tg.HapticFeedback) {
+                tg.HapticFeedback.notificationOccurred('success');
+            }
+
+            // Обработчик кнопки "Играть снова"
+            document.getElementById('playAgainBtn').addEventListener('click', function() {
+                resetGame();
+            });
+
+            // Отправка данных боту (опционально)
+            try {
+                tg.sendData(JSON.stringify({
+                    pair: selectedPair,
+                    timeframe: selectedTime,
+                    prediction: prediction
+                }));
+            } catch (e) {
+                console.log('Could not send data to bot:', e);
+            }
+        }
+
+        // Сброс игры
+        function resetGame() {
+            const gameScreen = document.getElementById('gameScreen');
+            const resultScreen = document.getElementById('resultScreen');
+            
+            resultScreen.classList.remove('show');
+            resultScreen.style.display = 'none';
+            gameScreen.style.display = 'block';
+            
+            // Сброс выбора
+            document.querySelectorAll('.option-btn').forEach(btn => 
+                btn.classList.remove('selected'));
+            selectedPair = null;
+            selectedTime = null;
+            document.getElementById('predictBtn').disabled = true;
+
+            // Вибрация
+            if (tg.HapticFeedback) {
+                tg.HapticFeedback.impactOccurred('light');
+            }
+        }
+
+        // Применение темы Telegram
+        document.body.style.backgroundColor = tg.themeParams.bg_color || '#ffffff';
+        document.body.style.color = tg.themeParams.text_color || '#000000';
+    </script>
+</body>
+</html>
